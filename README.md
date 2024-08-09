@@ -1,8 +1,8 @@
 # Teensy Ekit Module
 
-This project is an implementation of a MIDI USB trigger system. The system reads analog signals from sensors, processes them, and sends MIDI notes based on the signal amplitude.  
+This project is an implementation of a MIDI USB trigger system. The system reads analog signals from sensors, processes them, and sends MIDI notes based on the signal's peak amplitude.  
 
-For my system, the signals are first conditioned through several passive components to create the trigger input for the Teensy 4.1.
+For my system, the signals are first conditioned through several passive components to generate the signal read into the Teensy 4.1 analog pins.
 
 ## Dependencies
 
@@ -90,7 +90,7 @@ REMEMBER to adjust the length of the trigger array if you have more or fewer sen
 
 ## Resources
 
-- [Gadget Reboot](https://youtu.be/y2Lmbts9IIs) - initial codebase, circuit design for signal conditioning
+- [Gadget Reboot](https://youtu.be/y2Lmbts9IIs) - initial codebase for i2s implementation, circuit design for signal conditioning
 
 ## License
 

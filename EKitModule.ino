@@ -3,9 +3,7 @@
 
 ADC *adc = new ADC();
 
-int sensorValue1, sensorValue2, sensorValue3, sensorValue8;
-int threshold = 20;
-unsigned long debounceDelay = 30;
+int somePercentOfMax = 0.1 * 1024;
 
 struct MidiTrigger {
   int analogPin;
@@ -20,7 +18,6 @@ struct MidiTrigger {
 
   void checkAndTrigger() {
     int sensorValue = adc->analogRead(analogPin);
-    int somePercentOfMax = 0.2 * 1024;  // Example value, adjust as needed
 
     if (state == ch_idle) {
       if (sensorValue > (peakValue + somePercentOfMax)) {
@@ -62,7 +59,7 @@ MidiTrigger triggers[] = {
 };
 
 void setup() {
-  Serial.begin(9600);
+  // Serial.begin(9600);
   usbMIDI.begin();
 
   adc->adc0->setResolution(10);  // Set ADC resolution to 10 bits
