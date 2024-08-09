@@ -64,6 +64,14 @@ The code loops through each struct in the array and checks if the sensor value i
 3. Open the serial monitor to view the output.
 4. The system will read the sensor values and send MIDI notes based on the detected peaks.
 
+## To-do
+
+- [ ] implement a more robust peak detection algorithm that monitors the trend in the signal rise and decay
+- [ ] scale up sensors to match the piezos on my custom ekit, eventually scaling to the number of analog pins
+- [ ] measure latency (currently manageable, but noticeable) and optimize ADC logic
+- [ ] add digital QoL like MIDI channel selector to the struct
+- [ ] extend to triggering local samples on an SD card and pair with i2s audio output
+
 ## License
 
 This project is licensed under the MIT License.

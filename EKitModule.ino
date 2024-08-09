@@ -1,5 +1,6 @@
 #include <USBHost_t36.h>
 #include <ADC.h>
+#include <array>
 
 
 ADC *adc = new ADC();  // Create an ADC object
