@@ -22,26 +22,39 @@ struct MidiTrigger {
   int &peakValue;
   bool &noteActive;
   unsigned long &lastStrikeTime;
+  
+  enum channelState {ch_idle, ch_triggered};
+  channelState state = ch_idle;     // Start in idle state
 
   void checkAndTrigger() {
     int sensorValue = adc->analogRead(analogPin);
-    if (sensorValue > threshold) {
-      if (!noteActive) {
-        noteActive = true;
+    int somePercentOfMax = 0.2 * 1024;  // Example value, adjust as needed
+
+    if (state == ch_idle) {
+      if (sensorValue > (peakValue + somePercentOfMax)) {
+        state = ch_triggered;
         peakValue = sensorValue;
-        lastStrikeTime = millis();
-      } else if (sensorValue > peakValue) {
+      } else if (sensorValue <= (peakValue - somePercentOfMax)) {
         peakValue = sensorValue;
       }
-    } else if (noteActive && millis() - lastStrikeTime > debounceDelay) {
-      float velocity = map(peakValue, 1, 1024, 30, 127);
-      usbMIDI.sendNoteOn(midiNote, velocity, 1);
-      usbMIDI.sendNoteOff(midiNote, 0, 1);
-      noteActive = false;
-      peakValue = 0;
+    }
+
+    if (state == ch_triggered) {
+      if (sensorValue > peakValue) {
+        peakValue = sensorValue;  // Update peak value
+      } else if (sensorValue <= (peakValue - somePercentOfMax)) {
+        // Signal has settled; trigger the MIDI note
+        float velocity = map(peakValue, 1, 1024, 30, 127);
+        usbMIDI.sendNoteOn(midiNote, velocity, 1);
+        usbMIDI.sendNoteOff(midiNote, 0, 1);
+
+        noteActive = false;
+        state = ch_idle;           // Reset to idle state
+        peakValue = sensorValue;   // Trail the peak lower now that it has settled
+      }
     }
   }
-}; 
+};
 ```
 
 ### MidiTrigger Array
@@ -64,6 +77,8 @@ The code loops through each struct in the array and checks if the sensor value i
 3. Open the serial monitor to view the output.
 4. The system will read the sensor values and send MIDI notes based on the detected peaks.
 
+REMEMBER to adjust the length of the trigger array if you have more or fewer sensors.  Is this how C++ programmers really live?
+
 ## To-do
 
 - [ ] implement a more robust peak detection algorithm that monitors the trend in the signal rise and decay
@@ -71,6 +86,11 @@ The code loops through each struct in the array and checks if the sensor value i
 - [ ] measure latency (currently manageable, but noticeable) and optimize ADC logic
 - [ ] add digital QoL like MIDI channel selector to the struct
 - [ ] extend to triggering local samples on an SD card and pair with i2s audio output
+- [ ] rethink the serial writes to graph independent oscilloscope views for the signals to dial in sensitivities with the trim pots
+
+## Resources
+
+- [Gadget Reboot](https://youtu.be/y2Lmbts9IIs) - initial codebase, circuit design for signal conditioning
 
 ## License
 
