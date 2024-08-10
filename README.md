@@ -8,13 +8,13 @@ For my system, the signals are first conditioned through several passive compone
 
 The existing settings seem robust to some relatively janky conditions, including a free-hanging 35 mm piezo and a 6 ft 1/4" TS cable connected with alligator clips on the circuit side.  A Teensy pinout diagram image is included in the images folder as well.
 
-![image](images\circuit.png)
+![image](images/circuit.png)
 
-## How it looks in FL Studio 
+## How my setup looks in FL Studio
 
-This is using a PreSonus Studio 68c audio interface with a 256 sample buffer size.  Testing so far yields latencies acceptable difficult to detect by my amateur ears.
+This is using a PreSonus Studio 68c audio interface with a 256 sample buffer size.  Testing so far yields latencies difficult to detect (by my amateur ears).
 
-![image](images\FLScreenshot.png)
+![image](images/FLScreenshot.png)
 
 
 ## Dependencies
