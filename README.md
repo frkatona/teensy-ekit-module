@@ -4,6 +4,19 @@ This project is an implementation of a MIDI USB trigger system. The system reads
 
 For my system, the signals are first conditioned through several passive components to generate the signal read into the Teensy 4.1 analog pins.
 
+## What the circuit looks like
+
+The existing settings seem robust to some relatively janky conditions, including a free-hanging 35 mm piezo and a 6 ft 1/4" TS cable connected with alligator clips on the circuit side.  A Teensy pinout diagram image is included in the images folder as well.
+
+![image](images\circuit.png)
+
+## How it looks in FL Studio 
+
+This is using a PreSonus Studio 68c audio interface with a 256 sample buffer size.  Testing so far yields latencies acceptable difficult to detect by my amateur ears.
+
+![image](images\FLScreenshot.png)
+
+
 ## Dependencies
 
 - [USBHost_t36.h]()
@@ -14,27 +27,28 @@ For my system, the signals are first conditioned through several passive compone
 
 ### MidiTrigger Struct
 
+The meat of the logic is in the MidiTrigger struct which contains fields for the various state variables for each sensor as well as the method to check and trigger the MIDI note:
+
 ```cpp
 struct MidiTrigger {
   int analogPin;
-  int threshold;
   int midiNote;
-  int &peakValue;
-  bool &noteActive;
-  unsigned long &lastStrikeTime;
-  
+
+  int peakValue = 0;
+  bool noteActive = false;
+  unsigned long lastStrikeTime = 0;
+
   enum channelState {ch_idle, ch_triggered};
-  channelState state = ch_idle;     // Start in idle state
+  channelState state = ch_idle;
 
   void checkAndTrigger() {
     int sensorValue = adc->analogRead(analogPin);
-    int somePercentOfMax = 0.2 * 1024;  // Example value, adjust as needed
 
     if (state == ch_idle) {
-      if (sensorValue > (peakValue + somePercentOfMax)) {
+      if (sensorValue > (peakValue + detectionThreshold)) {
         state = ch_triggered;
         peakValue = sensorValue;
-      } else if (sensorValue <= (peakValue - somePercentOfMax)) {
+      } else if (sensorValue <= (peakValue - detectionThreshold)) {
         peakValue = sensorValue;
       }
     }
@@ -42,12 +56,11 @@ struct MidiTrigger {
     if (state == ch_triggered) {
       if (sensorValue > peakValue) {
         peakValue = sensorValue;  // Update peak value
-      } else if (sensorValue <= (peakValue - somePercentOfMax)) {
+      } else if (sensorValue <= (peakValue - detectionThreshold)) {
         // Signal has settled; trigger the MIDI note
         float velocity = map(peakValue, 1, 1024, 30, 127);
         usbMIDI.sendNoteOn(midiNote, velocity, 1);
         usbMIDI.sendNoteOff(midiNote, 0, 1);
-
         noteActive = false;
         state = ch_idle;           // Reset to idle state
         peakValue = sensorValue;   // Trail the peak lower now that it has settled
@@ -59,16 +72,23 @@ struct MidiTrigger {
 
 ### MidiTrigger Array
 
-```cpp
-MidiTrigger triggers[] = {
-  {A0, 20, 60, peakValue1, noteActive1, lastStrikeTime1},
-  {A1, 20, 61, peakValue2, noteActive2, lastStrikeTime2},
-  {A2, 20, 62, peakValue3, noteActive3, lastStrikeTime3},
-  {A8, 20, 63, peakValue8, noteActive8, lastStrikeTime8},
-};
-```
+And then the sensors are simply looped over to call the checkAndTrigger method for each:
 
-The code loops through each struct in the array and checks if the sensor value is above the threshold. If the sensor value is above the threshold, the system will send a MIDI note based on the peak value of the sensor.
+```cpp
+const byte numTriggers = 4;
+MidiTrigger triggers[] = {
+  {A0, 60},
+  {A1, 61},
+  {A2, 62},
+  {A8, 63},
+};
+
+void loop() {
+  for (int i = 0; i < numTriggers; i++) {
+    triggers[i].checkAndTrigger();
+  }
+}
+```
 
 ## Usage
 
@@ -79,14 +99,19 @@ The code loops through each struct in the array and checks if the sensor value i
 
 REMEMBER to adjust the length of the trigger array if you have more or fewer sensors.  Is this how C++ programmers really live?
 
+Modify the name.c file in this repository to change the name of the MIDI device in your DAW
+
 ## To-do
 
-- [ ] implement a more robust peak detection algorithm that monitors the trend in the signal rise and decay
-- [ ] scale up sensors to match the piezos on my custom ekit, eventually scaling to the number of analog pins
-- [ ] measure latency (currently manageable, but noticeable) and optimize ADC logic
+- [x] implement a more robust peak detection algorithm that monitors the trend in the signal rise and decay
+- [x] scale up sensors allowable sensors
+- [x] get latency difficult to detect
+- [ ] implement logic for foot pedal CC for the Lemon hi-hat compatible with Kontact Studio Drummer
+- [ ] implement rimshot piezos (may need special logic to reject a batterhead detection when it's simultaneous with a rimshot detection)
 - [ ] add digital QoL like MIDI channel selector to the struct
 - [ ] extend to triggering local samples on an SD card and pair with i2s audio output
 - [ ] rethink the serial writes to graph independent oscilloscope views for the signals to dial in sensitivities with the trim pots
+- [ ] test with a cheap Arduino with serial support like the Nano (~3/$20) to see if this could be made more affordable
 
 ## Resources
 
@@ -94,4 +119,4 @@ REMEMBER to adjust the length of the trigger array if you have more or fewer sen
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License

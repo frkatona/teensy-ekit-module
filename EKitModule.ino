@@ -3,27 +3,27 @@
 
 ADC *adc = new ADC();
 
-int somePercentOfMax = 0.1 * 1024;
+int detectionThreshold = 0.005 * 1024;
 
 struct MidiTrigger {
   int analogPin;
-  int threshold;
   int midiNote;
-  int &peakValue;
-  bool &noteActive;
-  unsigned long &lastStrikeTime;
-  
+
+  int peakValue = 0;
+  bool noteActive = false;
+  unsigned long lastStrikeTime = 0;
+
   enum channelState {ch_idle, ch_triggered};
-  channelState state = ch_idle;     // Start in idle state
+  channelState state = ch_idle;
 
   void checkAndTrigger() {
     int sensorValue = adc->analogRead(analogPin);
 
     if (state == ch_idle) {
-      if (sensorValue > (peakValue + somePercentOfMax)) {
+      if (sensorValue > (peakValue + detectionThreshold)) {
         state = ch_triggered;
         peakValue = sensorValue;
-      } else if (sensorValue <= (peakValue - somePercentOfMax)) {
+      } else if (sensorValue <= (peakValue - detectionThreshold)) {
         peakValue = sensorValue;
       }
     }
@@ -31,12 +31,11 @@ struct MidiTrigger {
     if (state == ch_triggered) {
       if (sensorValue > peakValue) {
         peakValue = sensorValue;  // Update peak value
-      } else if (sensorValue <= (peakValue - somePercentOfMax)) {
+      } else if (sensorValue <= (peakValue - detectionThreshold)) {
         // Signal has settled; trigger the MIDI note
         float velocity = map(peakValue, 1, 1024, 30, 127);
         usbMIDI.sendNoteOn(midiNote, velocity, 1);
         usbMIDI.sendNoteOff(midiNote, 0, 1);
-
         noteActive = false;
         state = ch_idle;           // Reset to idle state
         peakValue = sensorValue;   // Trail the peak lower now that it has settled
@@ -45,27 +44,26 @@ struct MidiTrigger {
   }
 };
 
-// Global variables to manage states
+// Number of triggers
 const byte numTriggers = 4;
-int peakValue1 = 0, peakValue2 = 0, peakValue3 = 0, peakValue8 = 0;
-bool noteActive1 = false, noteActive2 = false, noteActive3 = false, noteActive8 = false;
-unsigned long lastStrikeTime1 = 0, lastStrikeTime2 = 0, lastStrikeTime3 = 0, lastStrikeTime8 = 0;
 
+// Array of MidiTrigger objects
 MidiTrigger triggers[] = {
-  {A0, 20, 60, peakValue1, noteActive1, lastStrikeTime1},
-  {A1, 20, 61, peakValue2, noteActive2, lastStrikeTime2},
-  {A2, 20, 62, peakValue3, noteActive3, lastStrikeTime3},
-  {A8, 20, 63, peakValue8, noteActive8, lastStrikeTime8},
+  {A0, 60},
+  {A1, 61},
+  {A2, 62},
+  {A8, 63},
 };
 
 void setup() {
-  // Serial.begin(9600);
+  // Serial.begin(9600); // commenting out when not debugging with serial writes to isolate necessary expenses for latency reduction testing
   usbMIDI.begin();
 
-  adc->adc0->setResolution(10);  // Set ADC resolution to 10 bits
-  adc->adc0->setAveraging(2);  // Set averaging to 4 samples
-  adc->adc0->setConversionSpeed(ADC_CONVERSION_SPEED::VERY_HIGH_SPEED);  // Set conversion speed to very high
-  adc->adc0->setSamplingSpeed(ADC_SAMPLING_SPEED::VERY_HIGH_SPEED);  // Set sampling speed to very high
+  // ADC settings (still need to dial in)
+  adc->adc0->setResolution(10);
+  adc->adc0->setAveraging(4);  // number of samples to average over (play with noise rejection vs peak accuracy + latency)
+  adc->adc0->setConversionSpeed(ADC_CONVERSION_SPEED::VERY_HIGH_SPEED);  // highest sample conversion time
+  adc->adc0->setSamplingSpeed(ADC_SAMPLING_SPEED::VERY_HIGH_SPEED);  // highest sampling speed
 }
 
 void loop() {
