@@ -3,9 +3,10 @@
 
 ADC *adc = new ADC();
 
-int detectionThreshold = 0.005 * 1024;
+//  both the INCREASE from baseline to trigger rise detection as well as the DECREASE from peak to trigger peak detection
+int detectionThreshold = 7;  // balance between hit detection and noise rejection...(<10 will let some noise through, >10 won't detect softest hits)
 
-struct MidiTrigger {
+struct noteTrigger {
   int analogPin;
   int midiNote;
 
@@ -33,7 +34,7 @@ struct MidiTrigger {
         peakValue = sensorValue;  // Update peak value
       } else if (sensorValue <= (peakValue - detectionThreshold)) {
         // Signal has settled; trigger the MIDI note
-        float velocity = map(peakValue, 1, 1024, 30, 127);
+        float velocity = map(peakValue + 100, 1, 1024, 1, 127);
         usbMIDI.sendNoteOn(midiNote, velocity, 1);
         usbMIDI.sendNoteOff(midiNote, 0, 1);
         noteActive = false;
@@ -44,15 +45,21 @@ struct MidiTrigger {
   }
 };
 
-// Number of triggers
-const byte numTriggers = 4;
-
-// Array of MidiTrigger objects
-MidiTrigger triggers[] = {
+const byte numTriggers = 8;
+noteTrigger triggers[] = {
   {A0, 60},
   {A1, 61},
   {A2, 62},
-  {A8, 63},
+  {A3, 63},
+  {A4, 64},
+  {A5, 65},
+  {A6, 66},
+  {A7, 67},
+};
+
+const byte numCC = 1;
+noteTrigger triggers[] = {
+  {A9, 60},
 };
 
 void setup() {
@@ -61,13 +68,22 @@ void setup() {
 
   // ADC settings (still need to dial in)
   adc->adc0->setResolution(10);
-  adc->adc0->setAveraging(4);  // number of samples to average over (play with noise rejection vs peak accuracy + latency)
+  adc->adc0->setAveraging(6);  // number of samples to average over (play with noise rejection vs peak accuracy + latency)
   adc->adc0->setConversionSpeed(ADC_CONVERSION_SPEED::VERY_HIGH_SPEED);  // highest sample conversion time
   adc->adc0->setSamplingSpeed(ADC_SAMPLING_SPEED::VERY_HIGH_SPEED);  // highest sampling speed
 }
 
 void loop() {
+  checkNotes();
+  checkCC();
+}
+
+void checkNotes(){
   for (int i = 0; i < numTriggers; i++) {
     triggers[i].checkAndTrigger();
   }
+
+void checkCC(){
+
+}
 }
