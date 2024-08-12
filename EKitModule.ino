@@ -3,8 +3,8 @@
 
 ADC *adc = new ADC();
 
-//  both the INCREASE from baseline to trigger rise detection as well as the DECREASE from peak to trigger peak detection
-int detectionThreshold = 7;  // balance between hit detection and noise rejection...(<10 will let some noise through, >10 won't detect softest hits)
+// Both the INCREASE from baseline to trigger rise detection as well as the DECREASE from peak to trigger peak detection
+int detectionThreshold = 7;  // Balance between hit detection and noise rejection
 
 struct noteTrigger {
   int analogPin;
@@ -34,13 +34,30 @@ struct noteTrigger {
         peakValue = sensorValue;  // Update peak value
       } else if (sensorValue <= (peakValue - detectionThreshold)) {
         // Signal has settled; trigger the MIDI note
-        float velocity = map(peakValue + 100, 1, 1024, 1, 127);
+        float velocity = map(peakValue + 250, 1, 1024, 1, 127);
         usbMIDI.sendNoteOn(midiNote, velocity, 1);
         usbMIDI.sendNoteOff(midiNote, 0, 1);
         noteActive = false;
         state = ch_idle;           // Reset to idle state
         peakValue = sensorValue;   // Trail the peak lower now that it has settled
       }
+    }
+  }
+};
+
+// Struct for managing MIDI CC from a potentiometer
+struct ccControl {
+  int analogPin;
+  int ccNumber;
+  int lastValue = -1;  // Initialize with an invalid value to force the first send
+
+  void checkAndSend() {
+    int sensorValue = adc->analogRead(analogPin);
+    int ccValue = map(sensorValue, 0, 1023, 0, 127);  // Map to MIDI CC range
+
+    if (ccValue != lastValue) {  // Only send if value has changed
+      usbMIDI.sendControlChange(ccNumber, ccValue, 1);
+      lastValue = ccValue;
     }
   }
 };
@@ -57,20 +74,21 @@ noteTrigger triggers[] = {
   {A7, 67},
 };
 
+// Adding the CC control for the potentiometer on pin A9
 const byte numCC = 1;
-noteTrigger triggers[] = {
-  {A9, 60},
+ccControl ccControls[] = {
+  {A9, 10},  // CC number 10, change as needed
 };
 
 void setup() {
-  // Serial.begin(9600); // commenting out when not debugging with serial writes to isolate necessary expenses for latency reduction testing
+  // Serial.begin(9600); // Uncomment if needed for debugging
   usbMIDI.begin();
 
-  // ADC settings (still need to dial in)
+  // ADC settings
   adc->adc0->setResolution(10);
-  adc->adc0->setAveraging(6);  // number of samples to average over (play with noise rejection vs peak accuracy + latency)
-  adc->adc0->setConversionSpeed(ADC_CONVERSION_SPEED::VERY_HIGH_SPEED);  // highest sample conversion time
-  adc->adc0->setSamplingSpeed(ADC_SAMPLING_SPEED::VERY_HIGH_SPEED);  // highest sampling speed
+  adc->adc0->setAveraging(6);  // Number of samples to average over (adjust for noise rejection vs peak accuracy)
+  adc->adc0->setConversionSpeed(ADC_CONVERSION_SPEED::VERY_HIGH_SPEED);  // Highest sample conversion time
+  adc->adc0->setSamplingSpeed(ADC_SAMPLING_SPEED::VERY_HIGH_SPEED);  // Highest sampling speed
 }
 
 void loop() {
@@ -78,12 +96,14 @@ void loop() {
   checkCC();
 }
 
-void checkNotes(){
+void checkNotes() {
   for (int i = 0; i < numTriggers; i++) {
     triggers[i].checkAndTrigger();
   }
-
-void checkCC(){
-
 }
+
+void checkCC() {
+  for (int i = 0; i < numCC; i++) {
+    ccControls[i].checkAndSend();
+  }
 }

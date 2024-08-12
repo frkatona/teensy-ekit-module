@@ -106,16 +106,20 @@ Modify the name.c file in this repository to change the name of the MIDI device 
 - [x] implement a more robust peak detection algorithm that monitors the trend in the signal rise and decay
 - [x] scale up sensors allowable sensors
 - [x] get latency difficult to detect
-- [ ] implement logic for foot pedal CC for the Lemon hi-hat compatible with Kontact Studio Drummer
-- [ ] implement rimshot piezos (may need special logic to reject a batterhead detection when it's simultaneous with a rimshot detection)
-- [ ] add digital QoL like MIDI channel selector to the struct
+- [ ] implement logic for foot pedal CC for the Lemon hi-hat compatible with Kontact Studio Drummer [IN PROGRESS]
+- [ ] implement rimshot piezos (may need special logic to reject a batterhead detection when it's simultaneous with a rimshot detection though current logic has been sufficient for the Alesis heads to reject batterhead sensing on a rimshot strike)
+- [ ] add digital QoL like MIDI note selection hot swap and sensitivity adjustment building towards a high end Roland-esque UI
 - [ ] extend to triggering local samples on an SD card and pair with i2s audio output
 - [ ] rethink the serial writes to graph independent oscilloscope views for the signals to dial in sensitivities with the trim pots
 - [ ] test with a cheap Arduino with serial support like the Nano (~3/$20) to see if this could be made more affordable
 
 ## Resources
 
-- [Gadget Reboot](https://youtu.be/y2Lmbts9IIs) - initial codebase for i2s implementation, circuit design for signal conditioning
+- [Gadget Reboot Youtube Video](https://youtu.be/y2Lmbts9IIs) - initial codebase for i2s implementation, circuit design for signal conditioning
+  
+- [Evan Kale MIDI Drums Github](https://github.com/evankale/ArduinoMidiDrums) - Rockband kit midi hijacking ideas
+
+- [Teensy 4.1 Pinout Diagram](https://www.pjrc.com/teensy/pinout.html) - for reference
 
 ## License
 
