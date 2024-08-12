@@ -106,7 +106,12 @@ Modify the name.c file in this repository to change the name of the MIDI device 
 - [x] implement a more robust peak detection algorithm that monitors the trend in the signal rise and decay
 - [x] scale up sensors allowable sensors
 - [x] get latency difficult to detect
-- [ ] implement logic for foot pedal CC for the Lemon hi-hat compatible with Kontact Studio Drummer [IN PROGRESS]
+- [ ] more debounce (currently upwards of 5 triggers for hard strikes)
+- [ ] louder mappying (~59 max trigger value)
+- [ ] hi-hat support 
+  - [x] send foot pedal CC for the Lemon hi-hat compatible with Kontact Studio Drummer's hat-closedness parameter (CC#4)
+  - [ ] get hat to recognize a pedal press and send the note
+  - [ ] narrow the closeness range to get true closed hat sound
 - [ ] implement rimshot piezos (may need special logic to reject a batterhead detection when it's simultaneous with a rimshot detection though current logic has been sufficient for the Alesis heads to reject batterhead sensing on a rimshot strike)
 - [ ] add digital QoL like MIDI note selection hot swap and sensitivity adjustment building towards a high end Roland-esque UI
 - [ ] extend to triggering local samples on an SD card and pair with i2s audio output
@@ -115,11 +120,35 @@ Modify the name.c file in this repository to change the name of the MIDI device 
 
 ## Resources
 
+### MIDI Percussion Note Numbers
+
+- **36 - Kick**
+- 37 - Snare Cross Stick
+- **38 - Snare**
+- 41 - Tom (floor 2)
+- 42 - Hi-Hat (closed) (*sent through CC struct*)
+- 45 - Tom (low)
+- 43 - Tom (floor 1)
+- 44 - Hi-Hat (pedal) (*sent through CC struct*)
+- 45 - Tom (low)
+- 46 - **Hi-Hat (open)**
+- 47 - Tom (mid)
+- 48 - Tom (high)
+- 49 - **Crash**
+- 51 - **Ride (edge)**
+- 52 - China
+- 53 - Ride (bell)
+- 55 - Splash
+
+### Links
+
 - [Gadget Reboot Youtube Video](https://youtu.be/y2Lmbts9IIs) - initial codebase for i2s implementation, circuit design for signal conditioning
   
 - [Evan Kale MIDI Drums Github](https://github.com/evankale/ArduinoMidiDrums) - Rockband kit midi hijacking ideas
 
 - [Teensy 4.1 Pinout Diagram](https://www.pjrc.com/teensy/pinout.html) - for reference
+
+
 
 ## License
 
