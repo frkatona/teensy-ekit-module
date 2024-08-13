@@ -107,9 +107,12 @@ Modify the name.c file in this repository to change the name of the MIDI device 
 - [x] scale up sensors allowable sensors
 - [x] get latency difficult to detect
 - [ ] more debounce (currently upwards of 5 triggers for hard strikes)
-- [ ] louder mappying (~59 max trigger value)
-- [ ] hi-hat support 
+- [ ] investigate loudness issues
+  - [ ] try louder mappying (~59 max trigger value)
+  - [ ] record values for soft/medium/hard hits across several controller to see if some are just less sensitive (knowing sensitivity variance will be necessary soon either way)
+- [ ] hi-hat support
   - [x] send foot pedal CC for the Lemon hi-hat compatible with Kontact Studio Drummer's hat-closedness parameter (CC#4)
+    - [ ] get to work in FL's Kontakt instance out of the box (got it by coordinating ports in FL MIDI IO settings and the Kontakt wrapper...but idk how to hard code default midi controller port number and it resets on each upload it seems)
   - [ ] get hat to recognize a pedal press and send the note
   - [ ] narrow the closeness range to get true closed hat sound
 - [ ] implement rimshot piezos (may need special logic to reject a batterhead detection when it's simultaneous with a rimshot detection though current logic has been sufficient for the Alesis heads to reject batterhead sensing on a rimshot strike)

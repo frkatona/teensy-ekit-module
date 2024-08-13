@@ -4,7 +4,7 @@
 ADC *adc = new ADC();
 
 // Both the INCREASE from baseline to trigger rise detection as well as the DECREASE from peak to trigger peak detection
-int detectionThreshold = 7;  // Balance between hit detection and noise rejection
+int detectionThreshold = 9;  // Balance between hit detection and noise rejection
 // int MIDIChannel = 1;
 
 struct noteTrigger {
@@ -18,32 +18,41 @@ struct noteTrigger {
   enum channelState {ch_idle, ch_triggered};
   channelState state = ch_idle;
 
-  void checkAndTrigger() {
-    int sensorValue = adc->analogRead(analogPin);
+void checkAndTrigger() {
+  int sensorValue = adc->analogRead(analogPin);
+  unsigned long currentTime = millis();  // Get the current time
 
-    if (state == ch_idle) {
-      if (sensorValue > (peakValue + detectionThreshold)) {
-        state = ch_triggered;
-        peakValue = sensorValue;
-      } else if (sensorValue <= (peakValue - detectionThreshold)) {
-        peakValue = sensorValue;
-      }
-    }
+  // Define debounce time in milliseconds
+  unsigned long debounceTime = 10;  // Adjust this value based on your needs
 
-    if (state == ch_triggered) {
-      if (sensorValue > peakValue) {
-        peakValue = sensorValue;  // Update peak value
-      } else if (sensorValue <= (peakValue - detectionThreshold)) {
-        // Signal has settled; trigger the MIDI note
-        float velocity = map(peakValue + 100, 1, 1024, 1, 127);
-        usbMIDI.sendNoteOn(midiNote, velocity, 1);
-        usbMIDI.sendNoteOff(midiNote, 0, 1);
-        noteActive = false;
-        state = ch_idle;           // Reset to idle state
-        peakValue = sensorValue;   // Trail the peak lower now that it has settled
-      }
+  if (state == ch_idle) {
+    if (sensorValue > (peakValue + detectionThreshold)) {
+      state = ch_triggered;
+      peakValue = sensorValue;
+      lastStrikeTime = currentTime;  // Update last strike time when transitioning to triggered state
+    } else if (sensorValue <= (peakValue - detectionThreshold)) {
+      peakValue = sensorValue;
     }
   }
+
+  if (state == ch_triggered) {
+    if (sensorValue > peakValue) {
+      peakValue = sensorValue;  // Update peak value
+    } else if (sensorValue <= (peakValue - detectionThreshold) && (currentTime - lastStrikeTime) > debounceTime) {
+      // Signal has settled and debounce time has passed; trigger the MIDI note
+      float velocity = map(peakValue, 1, 650, 1, 127); // Adjusted ceiling from 1024
+      // Serial.print("velocity:");
+      // Serial.println(velocity);
+      usbMIDI.sendNoteOn(midiNote, velocity, 1);
+      usbMIDI.sendNoteOff(midiNote, 0, 1);
+      noteActive = false;
+      state = ch_idle;           // Reset to idle state
+      peakValue = sensorValue;   // Trail the peak lower now that it has settled
+      lastStrikeTime = currentTime;  // Update last strike time when note is sent
+    }
+  }
+}
+
 };
 
 // Struct for managing MIDI CC from a potentiometer
@@ -51,16 +60,28 @@ struct ccControl {
   int analogPin;
   int ccNumber;
   int lastValue = -1;  // Initialize with an invalid value to force the first send
+  bool isPedalDown = false;
 
   void checkAndSend() {
     int sensorValue = adc->analogRead(analogPin);
-    // Serial.println(sensorValue);
-    delay(50);
-    int ccValue = map(sensorValue, 840, 0, 0, 127);  // Map to MIDI CC range
+    int ccValue = map(sensorValue, 840, 5, 0, 127);  // Map to MIDI CC range
     if (ccValue - lastValue > 2 || ccValue - lastValue < -2) {  // Only send if value has changed
       usbMIDI.sendControlChange(ccNumber, ccValue, 1);
       lastValue = ccValue;
-      Serial.println(ccValue);
+
+      // Check if the pedal has moved to the near-closed position rapidly
+      if (ccValue > 120 && !isPedalDown) {  // Adjust threshold as needed
+        // int pedalVelocity = map(lastValue - ccValue, 0, 7, 60, 127);
+        usbMIDI.sendNoteOn(44, 110, 1); 
+        usbMIDI.sendNoteOff(44, 0, 1);
+        isPedalDown = true;
+        // Serial.print("Pedal Down");
+      }
+
+      if (isPedalDown && ccValue <= 120){
+        isPedalDown = false;
+      }
+
     }
   }
 };
@@ -84,7 +105,7 @@ ccControl ccControls[] = {
 };
 
 void setup() {
-  Serial.begin(9600); // Uncomment if needed for debugging
+  // Serial.begin(9600); // Uncomment if needed for debugging
   usbMIDI.begin();
 
   // ADC settings
@@ -95,7 +116,7 @@ void setup() {
 }
 
 void loop() {
-  // checkNotes();
+  checkNotes();
   checkCC();
 }
 
