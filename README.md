@@ -6,17 +6,24 @@ For my system, the signals are first conditioned through several passive compone
 
 ## Evolution of the circuit
 
+### Basic sensor --> MIDI
 Unconditioned signal was very prone to false triggers.
 
 ![image](images/circuit0.png)
+
+### + Signal Conditioning
 
 With signal conditioning (from [Gadget Reboot](https://youtu.be/y2Lmbts9IIs)), initial settings became robust to some relatively janky conditions, including a free-hanging 35 mm piezo and a 6 ft 1/4" TS cable connected with alligator clips.
 
 ![image](images/circuit1.png)
 
+### + Support Structure
+
 A support structure for 1/4" TRS ports allowed interfacing with proper ekit elements with more stability, as well as the addition of other elements like the 10k knob potentiometer.  While many of the drum elements will ultimately transport at least two signals (batter head + rimshot or edge + bell, for example), the current system is only set up to handle the batter head signal—hence the dangling yellow wires which connect to the vestigial ring of the TRS port.
 
 ![image](images/circuit2.png)
+
+### + Foot controller support
 
 Using the variable resistor in the Roland-esque hi-hat foot controller with a voltage divider allows communicating its plunger position as an analog signal mapped to MIDI CC#4 which controls the hi-hat closedness parameter in Kontakt Studio Drummer.
 
@@ -36,7 +43,7 @@ The microcontroller sends USB MIDI and is recognized by software as "APK MIDI" (
 
 - ADC.h
 
-### MidiTrigger Structs
+### controller state structs
 
 The meat of the logic is in the trigger (MidiTrigger) and CC (ccControl) structs which contain fields for the state of each sensor as well as the methods to check and trigger the relevant MIDI:
 
@@ -134,7 +141,7 @@ ccControl ccControls[] = {
 
 ```
 
-are simply looped over to call the checkAndTrigger method for each:
+are looped over to call the check method for each:
 
 ```cpp
 void loop() {
