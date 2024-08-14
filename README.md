@@ -6,24 +6,25 @@ For my system, the signals are first conditioned through several passive compone
 
 ## Evolution of the circuit
 
-### Basic sensor --> MIDI
+### basic sensor --> MIDI
+
 Unconditioned signal was very prone to false triggers.
 
 ![image](images/circuit0.png)
 
-### + Signal Conditioning
+### + signal conditioning
 
 With signal conditioning (from [Gadget Reboot](https://youtu.be/y2Lmbts9IIs)), initial settings became robust to some relatively janky conditions, including a free-hanging 35 mm piezo and a 6 ft 1/4" TS cable connected with alligator clips.
 
 ![image](images/circuit1.png)
 
-### + Support Structure
+### + support structure
 
 A support structure for 1/4" TRS ports allowed interfacing with proper ekit elements with more stability, as well as the addition of other elements like the 10k knob potentiometer.  While many of the drum elements will ultimately transport at least two signals (batter head + rimshot or edge + bell, for example), the current system is only set up to handle the batter head signal—hence the dangling yellow wires which connect to the vestigial ring of the TRS port.
 
 ![image](images/circuit2.png)
 
-### + Foot controller support
+### + foot controller support
 
 Using the variable resistor in the Roland-esque hi-hat foot controller with a voltage divider allows communicating its plunger position as an analog signal mapped to MIDI CC#4 which controls the hi-hat closedness parameter in Kontakt Studio Drummer.
 
@@ -182,7 +183,7 @@ Modify the name.c file in this repository to change the name of the MIDI device 
 - [ ] investigate loudness issues
   - [ ] try louder mappying (~59 max trigger value)
   - [ ] record values for soft/medium/hard hits across several controller to see if some are just less sensitive (knowing sensitivity variance will be necessary soon either way)
-- [ ] polish continuosly variable hi-hat implementation
+- [ ] polish continuously variable hi-hat implementation
   - [x] send foot pedal CC for the Lemon hi-hat compatible with Kontact Studio Drummer's hat-closedness parameter (CC#4)
     - [ ] get to work in FL's Kontakt instance out of the box (got it by coordinating ports in FL MIDI IO settings and the Kontakt wrapper...but idk how to hard code default midi controller port number and it resets on each upload it seems)
   - [x] get hat to recognize a pedal press and send the note (assigned a threshold and `isPressed?` boolean)
