@@ -34,6 +34,8 @@ Using the variable resistor in the Roland-esque hi-hat foot controller with a vo
 
 The microcontroller sends USB MIDI and is recognized by software as "APK MIDI" (configured using the name.c file).  To minimize latency, I'm using a PreSonus Studio 68c audio interface with a sample buffer size at or below 256.  Testing the basic strikes yields latencies difficult to detect to my ears.
 
+Note that foot controller CC seems to require matching port numbers in the Kontakt wrapper and the FL MIDI IO settings.
+
 ![image](images/FLScreenshot.png)
   
 ## Code Structure
@@ -181,7 +183,7 @@ Modify the name.c file in this repository to change the name of the MIDI device 
 - [x] get latency difficult to detect
 - [ ] more debounce (currently upwards of 5 triggers for hard strikes)
 - [ ] investigate loudness issues
-  - [ ] try louder mappying (~59 max trigger value)
+  - [ ] try louder mapping (~59 max trigger value)
   - [ ] record values for soft/medium/hard hits across several controller to see if some are just less sensitive (knowing sensitivity variance will be necessary soon either way)
 - [ ] polish continuously variable hi-hat implementation
   - [x] send foot pedal CC for the Lemon hi-hat compatible with Kontact Studio Drummer's hat-closedness parameter (CC#4)
@@ -222,11 +224,51 @@ Modify the name.c file in this repository to change the name of the MIDI device 
 
 ### Links
 
-- [Gadget Reboot Youtube Video](https://youtu.be/y2Lmbts9IIs) - initial codebase for i2s implementation, circuit design for signal conditioning
-  
-- [Evan Kale MIDI Drums Github](https://github.com/evankale/ArduinoMidiDrums) - Rockband kit midi hijacking ideas
-
 - [Teensy 4.1 Pinout Diagram](https://www.pjrc.com/teensy/pinout.html) - for reference
+
+- [Gadget Reboot Youtube Video](https://youtu.be/y2Lmbts9IIs) - initial codebase for i2s implementation, circuit design for signal conditioning
+
+- [Lemon brand cymbals I used](https://www.alibaba.com/product-detail/Lemon-electronic-drum-cymbals-bundle-A_1600389746562.html) - Knock-off Roland cymbals (careful, the shipping takes several weeks and costs as much as the cymbals...still works out to much less than Roland but also worth considering just buying the full Lemon kit if you can pay the tariffs)
+  
+- [Evan Kale MIDI Drums Github](https://github.com/evankale/ArduinoMidiDrums) - Rockband kit midi hijacking ideas (RIP EK)
+
+### Early Mockup Schematics
+
+Thoughts on the electrical signal and enumeration of the conditioning steps recommended from Gadget Reboot:
+
+![image](images/mockup/Ill_Electronics.png)
+
+Thoughts on physics of the strike impulse:
+
+![image](images/mockup/Ill_Physics.png)
+
+Thoughts on construction for the shell:
+
+![image](images/mockup/Ill_ShellInternals.png)
+
+Thoughts on hijacking a Rockband drum kit to wire to the microcontroller:
+
+![image](images/mockup/Draw_Solution1_1.png)
+
+![image](images/mockup/Draw_Solution1_2.png)
+
+Thoughts on using an existing ekit module:
+
+![image](images/mockup/Draw_Solution2_1.png)
+
+![image](images/mockup/Draw_Solution2_2.png)
+
+3DP Box Design prototype:
+
+![image](images/mockup/Blender_wire.png)
+
+![image](images/mockup/Blender_front.png)
+
+![image](images/mockup/Blender_top.png)
+
+![image](images/mockup/Blender_inside.png)
+
+
 
 ## License
 
