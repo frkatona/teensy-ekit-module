@@ -4,46 +4,51 @@ This project is an implementation of a MIDI USB trigger system. The system reads
 
 For my system, the signals are first conditioned through several passive components to generate the signal read into the Teensy 4.1 analog pins.
 
-## What the circuit looks like
+## Evolution of the circuit
 
-The existing settings seem robust to some relatively janky conditions, including a free-hanging 35 mm piezo and a 6 ft 1/4" TS cable connected with alligator clips on the circuit side.  A Teensy pinout diagram image is included in the images folder as well.
+Unconditioned signal was very prone to false triggers.
 
-![image](images/circuit.png)
+![image](images/circuit0.png)
 
-## How my setup looks in FL Studio
+With signal conditioning (from [Gadget Reboot](https://youtu.be/y2Lmbts9IIs)), initial settings became robust to some relatively janky conditions, including a free-hanging 35 mm piezo and a 6 ft 1/4" TS cable connected with alligator clips.
 
-This is using a PreSonus Studio 68c audio interface with a 256 sample buffer size.  Testing so far yields latencies difficult to detect (by my amateur ears).
+![image](images/circuit1.png)
+
+A support structure for 1/4" TRS ports allowed interfacing with proper ekit elements with more stability, as well as the addition of other elements like the 10k knob potentiometer.  While many of the drum elements will ultimately transport at least two signals (batter head + rimshot or edge + bell, for example), the current system is only set up to handle the batter head signal—hence the dangling yellow wires which connect to the vestigial ring of the TRS port.
+
+![image](images/circuit2.png)
+
+Using the variable resistor in the Roland-esque hi-hat foot controller with a voltage divider allows communicating its plunger position as an analog signal mapped to MIDI CC#4 which controls the hi-hat closedness parameter in Kontakt Studio Drummer.
+
+![image](images/hatcontroller.png)
+
+## Interfacing with the VST/DAW
+
+The microcontroller sends USB MIDI and is recognized by software as "APK MIDI" (configured using the name.c file).  To minimize latency, I'm using a PreSonus Studio 68c audio interface with a sample buffer size at or below 256.  Testing the basic strikes yields latencies difficult to detect to my ears.
 
 ![image](images/FLScreenshot.png)
-
-
-## Dependencies
-
-- [USBHost_t36.h]()
-
-- [ADC.h]()
   
 ## Code Structure
 
-### MidiTrigger Struct
+### Dependencies
 
-The meat of the logic is in the MidiTrigger struct which contains fields for the various state variables for each sensor as well as the method to check and trigger the MIDI note:
+- USBHost_t36.h
+
+- ADC.h
+
+### MidiTrigger Structs
+
+The meat of the logic is in the trigger (MidiTrigger) and CC (ccControl) structs which contain fields for the state of each sensor as well as the methods to check and trigger the relevant MIDI:
 
 ```cpp
 struct MidiTrigger {
   int analogPin;
   int midiNote;
 
-  int peakValue = 0;
-  bool noteActive = false;
-  unsigned long lastStrikeTime = 0;
-
-  enum channelState {ch_idle, ch_triggered};
-  channelState state = ch_idle;
-
   void checkAndTrigger() {
     int sensorValue = adc->analogRead(analogPin);
 
+    // Monitor the peak value of the signal for triggering
     if (state == ch_idle) {
       if (sensorValue > (peakValue + detectionThreshold)) {
         state = ch_triggered;
@@ -53,17 +58,52 @@ struct MidiTrigger {
       }
     }
 
+    // Monitor the rising edge of a triggered signal
     if (state == ch_triggered) {
       if (sensorValue > peakValue) {
-        peakValue = sensorValue;  // Update peak value
+        // Update peak value
+        peakValue = sensorValue;
       } else if (sensorValue <= (peakValue - detectionThreshold)) {
         // Signal has settled; trigger the MIDI note
         float velocity = map(peakValue, 1, 1024, 30, 127);
         usbMIDI.sendNoteOn(midiNote, velocity, 1);
         usbMIDI.sendNoteOff(midiNote, 0, 1);
         noteActive = false;
-        state = ch_idle;           // Reset to idle state
-        peakValue = sensorValue;   // Trail the peak lower now that it has settled
+        // Reset to idle state
+        state = ch_idle;
+        // Trail the peak lower now that it has settled
+        peakValue = sensorValue;
+      }
+    }
+  }
+};
+```
+
+```cpp
+struct ccControl {
+  int analogPin;
+  int ccNumber;
+  int lastValue = -1;  // Initialize with an invalid value to force the first send
+  bool isPedalDown = false;
+
+  void checkAndSend() {
+    int sensorValue = adc->analogRead(analogPin);
+    int ccValue = map(sensorValue, 840, 5, 0, 127);  // Map to MIDI CC range
+    if (ccValue - lastValue > 2 || ccValue - lastValue < -2) {  // Only send if value has changed
+      usbMIDI.sendControlChange(ccNumber, ccValue, 1);
+      lastValue = ccValue;
+
+      // Check if the pedal has moved to the near-closed position rapidly
+      if (ccValue > 120 && !isPedalDown) {  // Adjust threshold as needed
+        // int pedalVelocity = map(lastValue - ccValue, 0, 7, 60, 127);
+        usbMIDI.sendNoteOn(44, 110, 1); 
+        usbMIDI.sendNoteOff(44, 0, 1);
+        isPedalDown = true;
+        // Serial.print("Pedal Down");
+      }
+
+      if (isPedalDown && ccValue <= 120){
+        isPedalDown = false;
       }
     }
   }
@@ -72,30 +112,55 @@ struct MidiTrigger {
 
 ### MidiTrigger Array
 
-And then the sensors are simply looped over to call the checkAndTrigger method for each:
+And then the sensors arrays,
 
 ```cpp
-const byte numTriggers = 4;
-MidiTrigger triggers[] = {
-  {A0, 60},
+const byte numTriggers = 8;
+noteTrigger triggers[] = {
+  {A0, 46},
   {A1, 61},
   {A2, 62},
-  {A8, 63},
+  {A3, 63},
+  {A4, 64},
+  {A5, 65},
+  {A6, 66},
+  {A7, 67},
 };
 
+const byte numCCs = 1;
+ccControl ccControls[] = {
+  {A8, 4},
+};
+
+```
+
+are simply looped over to call the checkAndTrigger method for each:
+
+```cpp
 void loop() {
+  checkNotes();
+  checkCC();
+}
+
+void checkNotes() {
   for (int i = 0; i < numTriggers; i++) {
     triggers[i].checkAndTrigger();
   }
 }
+
+void checkCC() {
+  for (int i = 0; i < numCCs; i++) {
+    ccControls[i].checkAndSend();
+  }
 ```
 
 ## Usage
 
 1. Upload the code to your microcontroller.
-2. Connect the sensors to the specified analog pins.
-3. Open the serial monitor to view the output.
-4. The system will read the sensor values and send MIDI notes based on the detected peaks.
+2. Connect the sensors to corresponding analog pins.
+3. Enable the device in software
+
+Debug with serial plotter to dial in the sensitivity of the sensors.
 
 REMEMBER to adjust the length of the trigger array if you have more or fewer sensors.  Is this how C++ programmers really live?
 
@@ -110,16 +175,20 @@ Modify the name.c file in this repository to change the name of the MIDI device 
 - [ ] investigate loudness issues
   - [ ] try louder mappying (~59 max trigger value)
   - [ ] record values for soft/medium/hard hits across several controller to see if some are just less sensitive (knowing sensitivity variance will be necessary soon either way)
-- [ ] hi-hat support
+- [ ] polish continuosly variable hi-hat implementation
   - [x] send foot pedal CC for the Lemon hi-hat compatible with Kontact Studio Drummer's hat-closedness parameter (CC#4)
     - [ ] get to work in FL's Kontakt instance out of the box (got it by coordinating ports in FL MIDI IO settings and the Kontakt wrapper...but idk how to hard code default midi controller port number and it resets on each upload it seems)
-  - [ ] get hat to recognize a pedal press and send the note
+  - [x] get hat to recognize a pedal press and send the note (assigned a threshold and `isPressed?` boolean)
+  - [ ] implement velocity sensitivity (circle buffer that calculates maximum difference when the signal crosses the pedal press threshold and maps that to a velocity range?)
   - [ ] narrow the closeness range to get true closed hat sound
+  - [ ] solve bug where hat triggers don't cut currently playing samples like they should (possibly Kontakt isn't equipped to deal with the repeat signals from poor debounce so solving that might solve this?)
 - [ ] implement rimshot piezos (may need special logic to reject a batterhead detection when it's simultaneous with a rimshot detection though current logic has been sufficient for the Alesis heads to reject batterhead sensing on a rimshot strike)
-- [ ] add digital QoL like MIDI note selection hot swap and sensitivity adjustment building towards a high end Roland-esque UI
+- [ ] Build toward high-end Roland-esque UI
+  - [x] wire knob pot
+  - [ ] implement digital QoL like MIDI note selection hot swap and sensitivity adjustment
 - [ ] extend to triggering local samples on an SD card and pair with i2s audio output
-- [ ] rethink the serial writes to graph independent oscilloscope views for the signals to dial in sensitivities with the trim pots
-- [ ] test with a cheap Arduino with serial support like the Nano (~3/$20) to see if this could be made more affordable
+- [ ] dial in sensitivities with the trim pots
+- [ ] test with a cheap controller with serial support and MIDI libraries (e.g., knock-off arduino micro ~3/$20) to see if this could be made more affordably
 
 ## Resources
 
@@ -150,8 +219,6 @@ Modify the name.c file in this repository to change the name of the MIDI device 
 - [Evan Kale MIDI Drums Github](https://github.com/evankale/ArduinoMidiDrums) - Rockband kit midi hijacking ideas
 
 - [Teensy 4.1 Pinout Diagram](https://www.pjrc.com/teensy/pinout.html) - for reference
-
-
 
 ## License
 

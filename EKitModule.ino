@@ -81,7 +81,6 @@ struct ccControl {
       if (isPedalDown && ccValue <= 120){
         isPedalDown = false;
       }
-
     }
   }
 };
