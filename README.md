@@ -314,7 +314,7 @@ Similarly, there is warping in many parts, particularly the thin walls of the pl
 
 ### Signal conditioning evaluation
 
-Measurements made from the GR video thoughts as enumerated in [electronics section](#signal-conditioning-considerations)
+Measurements made from the GR video thoughts as enumerated in [electronics section](#signal-conditioning-considerations).  Note that the image is massive (~8k x 8k), so open the image in a dedicated tab if the readme thumbnail text is illegible (certainly there's a more accessible way to present this data SORRY).
 
 ![image](images/oscilloscope.png)
 
