@@ -278,13 +278,13 @@ Here, I simply illustrate the relevant cables/ports that would connect an existi
 
 ![image](images/mockup/Draw_Solution2_2.png)
 
-### Thoughts on printing a box for the circuit
+### Thoughts on printing a box for the circuit (v0.01)
 
 The following images illustrate the design of a 3D-printed box to house the circuit.  This type of practical design is something I'm thoroughly unfamiliar with, but I've attempted to enumerate the desired traits and and solutions in this figure.  
 
 ![image](images/mockup/Draw_Solution2_1.png)
 
-### 3DP Box Design prototype
+### 3DP Box Design prototype (v0.02)
 
 I've designed a box in Blender to house the circuit (and included a .blend file in this repository, though it is not designed to be user-friendly).  The box is designed to be printed in several parts and to fit together with dovetail-like joints.  The top of the box is designed to be removable for easy access to the circuit.  There are holes in the front for the TS jacks and in the back for the usb, power, and audio connectors.  A QR code is stamped onto the lid linking to my github.io homepage.
 
@@ -298,7 +298,7 @@ I've designed a box in Blender to house the circuit (and included a .blend file 
 
 Future plans include a way to mount the box to a drum rack in a way that is both secure and adjustable (possibly a clamp system that can be tightened with a wing nut like the Alesis module?) as well as additional ports for dials, switches, and LEDs that can be interacted with from the outside of the box.
 
-### Printed prototype v0.1
+### Printed prototype (v0.1)
 
 The SLA printed box body prints in 4 parts: front-left corner, front-right corner, back-left corner-and-floor, and back-right corner-and-floor.  A lid and small stand (for storing layers of boards if necessary) are included as well.
 
@@ -312,11 +312,25 @@ Similarly, there is warping in many parts, particularly the thin walls of the pl
 
 ![image](images/print.jpg)
 
-### Signal conditioning evaluation
+### Signal conditioning results
 
-Measurements made from the GR video thoughts as enumerated in [electronics section](#signal-conditioning-considerations).  Note that the image is massive (~8k x 8k), so open the image in a dedicated tab if the readme thumbnail text is illegible (certainly there's a more accessible way to present this data SORRY).
+Measurements inspired by the GR video points as enumerated in [electronics section](#signal-conditioning-considerations).  Note that a more comprehensive (and large at roughly 8k x 8k pixels) version of these initial images--with a more incremental evaluation of the circuit's effectiveness--is available in the image folder (excluded from the readme to reduce page memory).
 
-![image](images/oscilloscope.png)
+## example image and color key
+
+![oscilloscope legend](images/oscilloscope_legend.png)
+
+## direct signal from the rockband kick
+
+![direct signal from the rockband kick](images/oscilloscope_kick_direct.png)
+
+## conditioned signal from the rockband kick
+
+![conditioned signal from the rockband kick](images/oscilloscope_kick_conditioned.png)
+
+Obvious improvement is seen in the quality of the signal.  In the direct signal, the capacitative oscillations predominate such that a 'detection time' is difficult to determine.  
+
+TODO - list out other descriptions and analysis (e.g., saturation, bounce, overshoot, etc.)
 
 I've taken more measurements but working them up takes a lot of time, though I could probably also just upload the oscilloscope image exports with a reasonable naming scheme with comparable utility.  However, I'd really like to make some kind of graph to show how these metrics are influenced by not only the conditioning, but the materials and construction of the sensor and shell.
 
