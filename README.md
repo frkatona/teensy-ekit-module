@@ -268,7 +268,13 @@ Thoughts on using an existing ekit module:
 
 ![image](images/mockup/Blender_inside.png)
 
+### Signal conditioning evaluation (from electronics considerations graphic)
 
+![image](images/oscilloscope.png)
+
+### Printed prototype v1
+
+![image](images/print.jpg)
 
 ## License
 
