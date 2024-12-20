@@ -232,33 +232,61 @@ Modify the name.c file in this repository to change the name of the MIDI device 
   
 - [Evan Kale MIDI Drums Github](https://github.com/evankale/ArduinoMidiDrums) - Rockband kit midi hijacking ideas (RIP EK)
 
-### Early Mockup Schematics
+## Mockups, schematics, and prototype progress
 
-Thoughts on the electrical signal and enumeration of the conditioning steps recommended from Gadget Reboot:
+### Signal conditioning considerations
+
+Gadget Reboot (GR) lays out the signal conditioning steps in his video, and I've enumerated and roughly illustrated here.  Note that GR's system is a bare piezo tapped with a stiff mechanical pencil and, as such, the considerations and measurements he presented will likely differ substantially from all of the systems I have in mind (salvaged Rock Band kit, modified acoustic shells, and existing ekit components).
 
 ![image](images/mockup/Ill_Electronics.png)
 
-Thoughts on physics of the strike impulse:
+Feel free to [skip to some real oscilloscope results](#signal-conditioning-evaluation) below.
+
+### Thoughts on physics of the strike impulse
+
+Because of GR's barebones approach, none of the relevant physics considerations can really be extracted from his video.  I've searched somewhat thoroughly for various DIY ekit builds that comment on fundamental physical considerations, but this seems to be the most neglected aspect as creators generally opt to outsource the shell, mesh head, and trigger components.  
+
+At time of writing, I can agree that the shells and mesh heads are, while expensive, critical to the feel of the kit.  The triggers are, of course, critical to the response of the kit, but perhaps the thrust of this project is best understood through the view of DIY triggering as a viable cut into the bulk of the cost of a high-end ekit, as well as a source of otherwise unattainable customization.
+
+Perhaps publically available patents from Roland, Yamaha, and Alesis could provide additional insight into physics, materials, and structure in optimizing signal response, but a cursory search has been unhelpful in most meaningful ways.  That said, following two images detail some of my half-baked thoughts on the most likely problems and solutions in the physics of the the ekit strike impulse through the sensor and shell.
 
 ![image](images/mockup/Ill_Physics.png)
 
-Thoughts on construction for the shell:
+### Shell construction
 
 ![image](images/mockup/Ill_ShellInternals.png)
 
-Thoughts on hijacking a Rockband drum kit to wire to the microcontroller:
+### Thoughts on hijacking a Rockband drum kit to wire to the microcontroller
+
+Perhaps the most interesting and affordable possible starting point for a full set of triggers, pads, and structure is to open a video game (e.g., rockband, guitar hero) drum kit's body and simply route the pads signals to the microcontroller instead of the existing circuit board (a la Evan Kale).  Certainly the existing board must include its own conditioning and processing and it would be all the more attractive to simply hijack that, but I don't have the expertise to reverse engineer the board and I therefore anticipate it would not be worth the effort.
+
+And so, the following image illustrates a basic overview of of implementing the GR conditioning circuit on the Rockband drum pads.
 
 ![image](images/mockup/Draw_Solution1_1.png)
 
+### Proto-board circuit layout
+
+Regardless of whether the Rockband kit, acoustic kit, or e-kit components are used, some form of the GR conditioning circuit will be necessary.  While the previous image illustrated a basic overview of how this would apply to a single input, fitting the circuit compactly onto a board (which, in turn, ideally fits into a small box) leaves little room for improvisation.  The following image illustrates the detailed proto-board layout for the input, conditioning, processing, digital-analog conversion, and output.
+
+Note that, ultimately, the complexity of creating and troubleshooting the proto-board form of this project was so overwhelming that I opted to purchase the board through GR's PCBway affiliate link (letting them include and solder all the parts except for the trim pots, which seemed overpriced in their quote).  Nonetheless, I feel the diagram can be helpful as a reference going forward and **not** just because I wasted so much time on it and am upset.
+
 ![image](images/mockup/Draw_Solution1_2.png)
 
-Thoughts on using an existing ekit module:
+### Thoughts on using an existing ekit module
 
-![image](images/mockup/Draw_Solution2_1.png)
+Here, I simply illustrate the relevant cables/ports that would connect an existing ekit to the microcontroller.
 
 ![image](images/mockup/Draw_Solution2_2.png)
 
-3DP Box Design prototype:
+### Thoughts on printing a box for the circuit
+
+The following images illustrate the design of a 3D-printed box to house the circuit.  This type of practical design is something I'm thoroughly unfamiliar with, but I've attempted to enumerate the desired traits and and solutions in this figure.  
+
+![image](images/mockup/Draw_Solution2_1.png)
+
+### 3DP Box Design prototype
+
+I've designed a box in Blender to house the circuit (and included a .blend file in this repository, though it is not designed to be user-friendly).  The box is designed to be printed in several parts and to fit together with dovetail-like joints.  The top of the box is designed to be removable for easy access to the circuit.  There are holes in the front for the TS jacks and in the back for the usb, power, and audio connectors.  A QR code is stamped onto the lid linking to my github.io homepage.
 
 ![image](images/mockup/Blender_wire.png)
 
@@ -268,13 +296,29 @@ Thoughts on using an existing ekit module:
 
 ![image](images/mockup/Blender_inside.png)
 
-### Signal conditioning evaluation (from electronics considerations graphic)
+Future plans include a way to mount the box to a drum rack in a way that is both secure and adjustable (possibly a clamp system that can be tightened with a wing nut like the Alesis module?) as well as additional ports for dials, switches, and LEDs that can be interacted with from the outside of the box.
+
+### Printed prototype v0.1
+
+The SLA printed box body prints in 4 parts: front-left corner, front-right corner, back-left corner-and-floor, and back-right corner-and-floor.  A lid and small stand (for storing layers of boards if necessary) are included as well.
+
+Good:
+It is surprisingly sturdy and the dovetails fit together imperfectly, but securely.  The front 1/4" ports are spaced nicely and interface well with the jacks, and the box is spacious enough to fit the circuit.  The small stand fits snugly in the box and is easy to remove.
+
+Bad:
+On the other hand, I was overly optimistic about the wall dovetails providing enough stability to keep the left and right floor-halves and front-halves together, and so there is some noticeably unnattractive, (though perhaps not *totally* functionally disruptive) misalignment and wobbling.  I'd rather keep the design somewhat modular so that individual breaks can be replaced, but some sort of internal support may be necessary to keep the structure more uniformly stable.
+
+Similarly, there is warping in many parts, particularly the thin walls of the platform and lid.  This is certainly exacerbating any misfitting/misalignment, but it's likely something I'll be able to correct with more experience with SLA printing (and likely less of an issue with FDM).  the solid print makes the box a bit heavier than I'd like, though I mostly wanted the prototypes to be stable before I optimized weight and material use.  Finally, while QR code on the lid is legible to the eye, the lighting conditions strongly affect its recognizability with my iPhone 12, favoring harsh, sidelit conditions.
+
+![image](images/print.jpg)
+
+### Signal conditioning evaluation
+
+Measurements made from the GR video thoughts as enumerated in [electronics section](#signal-conditioning-considerations)
 
 ![image](images/oscilloscope.png)
 
-### Printed prototype v1
-
-![image](images/print.jpg)
+I've taken more measurements but working them up takes a lot of time, though I could probably also just upload the oscilloscope image exports with a reasonable naming scheme with comparable utility.  However, I'd really like to make some kind of graph to show how these metrics are influenced by not only the conditioning, but the materials and construction of the sensor and shell.
 
 ## License
 
