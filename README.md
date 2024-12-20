@@ -8,7 +8,7 @@ For my system, the signals are first conditioned through several passive compone
 
 ### basic sensor --> MIDI
 
-Unconditioned signal was very prone to false triggers.
+Unconditioned signal was very prone to false triggers (a more comprehensive evolution of the signal is available [below](#signal-conditioning-evaluation))
 
 ![image](images/circuit0.png)
 
